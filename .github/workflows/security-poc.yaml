@@ -1,0 +1,104 @@
+name: Security POC - Open Source Toolchain
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  security:
+    name: DevSecOps Security Pipeline
+    runs-on: [self-hosted, security]
+
+    steps:
+    # --------------------------------------------------
+    # Checkout
+    # --------------------------------------------------
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # --------------------------------------------------
+    # SAST - Semgrep
+    # --------------------------------------------------
+    - name: SAST - Semgrep
+      run: |
+        docker run --rm \
+          -v "$PWD:/src" \
+          semgrep/semgrep \
+          semgrep scan --config=auto --json > semgrep.json
+
+    # --------------------------------------------------
+    # Secrets Detection - Gitleaks
+    # --------------------------------------------------
+    - name: Secrets - Gitleaks
+      run: |
+        docker run --rm \
+          -v "$PWD:/repo" \
+          zricethezav/gitleaks detect \
+          --source /repo \
+          --report-format json \
+          --report-path gitleaks.json || true
+
+    # --------------------------------------------------
+    # SCA + IaC - Trivy filesystem scan
+    # --------------------------------------------------
+    - name: SCA / IaC - Trivy FS
+      run: |
+        docker run --rm \
+          -v "$PWD:/src" \
+          aquasec/trivy \
+          fs /src --format json > trivy-fs.json
+
+    # --------------------------------------------------
+    # Build application image
+    # --------------------------------------------------
+    - name: Build Docker image
+      run: |
+        docker build -t juice-shop:poc .
+
+    # --------------------------------------------------
+    # Container Image Scan - Trivy
+    # --------------------------------------------------
+    - name: Container Scan - Trivy Image
+      run: |
+        docker run --rm \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          aquasec/trivy \
+          image juice-shop:poc --format json > trivy-image.json
+
+    # --------------------------------------------------
+    # Deploy app locally for DAST
+    # --------------------------------------------------
+    - name: Start application
+      run: |
+        docker rm -f juice-shop || true
+        docker run -d --name juice-shop -p 3000:3000 juice-shop:poc
+        sleep 15
+
+    # --------------------------------------------------
+    # DAST - OWASP ZAP (baseline)
+    # --------------------------------------------------
+    - name: DAST - OWASP ZAP Baseline
+      run: |
+        docker run --rm \
+          --network host \
+          owasp/zap2docker-stable \
+          zap-baseline.py \
+            -t http://localhost:3000 \
+            -J zap.json \
+            -r zap.html || true
+
+    # --------------------------------------------------
+    # Upload security reports
+    # --------------------------------------------------
+    - name: Upload security artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports
+        path: |
+          semgrep.json
+          gitleaks.json
+          trivy-fs.json
+          trivy-image.json
+          zap.json
+          zap.html
