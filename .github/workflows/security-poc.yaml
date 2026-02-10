@@ -8,7 +8,7 @@ on:
 jobs:
   security:
     name: DevSecOps Security Pipeline
-    runs-on: [self-hosted, security]
+    runs-on: [self-hosted]
 
     steps:
     # --------------------------------------------------
