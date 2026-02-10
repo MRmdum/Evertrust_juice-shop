@@ -2,7 +2,7 @@ name: Security POC - Open Source Toolchain
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
 
 jobs:
