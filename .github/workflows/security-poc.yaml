@@ -159,6 +159,6 @@ jobs:
           -F "engagement_name=${{ secrets.DEFECTDOJO_ENGAGEMENT_NAME }}" \
           -F "engagement=${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}" \
           -F "scan_type=ZAP Scan" \
-          -F "file=@zap-out/zap.json" \
+          -F "file=@zap-out/zap.xml" \
           -F "active=true" \
           -F "verified=true"
