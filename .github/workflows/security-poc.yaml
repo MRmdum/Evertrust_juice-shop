@@ -80,15 +80,18 @@ jobs:
     # --------------------------------------------------
     - name: Run OWASP ZAP Baseline Scan
       run: |
+        mkdir -p $GITHUB_WORKSPACE/zap-out
         docker run --rm \
           --network host \
-          -v $(pwd):/zap/wrk \
+          -v $GITHUB_WORKSPACE/zap-out:/zap/wrk \
           -u $(id -u):$(id -g) \
           ghcr.io/zaproxy/zaproxy:stable \
           zap-baseline.py \
           -t http://localhost:3000 \
-          -J zap.json \
-          -r zap.html
+          -r /zap/wrk/zap.html \
+          -J /zap/wrk/zap.json \
+          --auto \
+          --junit-report /zap/wrk/zap-junit.xml
 
     # --------------------------------------------------
     # Upload security reports
