@@ -84,17 +84,16 @@ jobs:
         docker run --rm \
           --network host \
           -v $GITHUB_WORKSPACE/zap-out:/zap/wrk \
+          -v $GITHUB_WORKSPACE/zap-out:/home/zap \
           -u $(id -u):$(id -g) \
-          -e ZAP_USER_UID=$(id -u) \
-          -e ZAP_USER_GID=$(id -g) \
           ghcr.io/zaproxy/zaproxy:stable \
           zap-baseline.py \
           -t http://localhost:3000 \
           -r /zap/wrk/zap.html \
           -x /zap/wrk/zap.xml \
           -J /zap/wrk/zap.json \
-          --auto \
-          -z "-config report.summary.filename=/zap/wrk/zap_out.json"
+          --auto
+
 
 
     # --------------------------------------------------
