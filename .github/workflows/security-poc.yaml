@@ -91,7 +91,6 @@ jobs:
           -r /zap/wrk/zap.html \
           -J /zap/wrk/zap.json \
           --auto \
-          --junit-report /zap/wrk/zap-junit.xml
 
     # --------------------------------------------------
     # Upload security reports
@@ -106,8 +105,9 @@ jobs:
           gitleaks.json
           trivy-fs.json
           trivy-image.json
-          zap.json
-          zap.html
+          zap-out/zap.json
+          zap-out/zap.html
+          zap-out/zap.xml
 
     - name: Upload Semgrep to DefectDojo
       run: |
