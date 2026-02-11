@@ -87,14 +87,15 @@ jobs:
           -u $(id -u):$(id -g) \
           -e ZAP_USER_UID=$(id -u) \
           -e ZAP_USER_GID=$(id -g) \
-          -e ZAP_OUT=/zap/wrk/zap_out.json \
           ghcr.io/zaproxy/zaproxy:stable \
           zap-baseline.py \
           -t http://localhost:3000 \
           -r /zap/wrk/zap.html \
           -x /zap/wrk/zap.xml \
           -J /zap/wrk/zap.json \
-          --auto
+          --auto \
+          -z "-config report.summary.filename=/zap/wrk/zap_out.json"
+
 
     # --------------------------------------------------
     # Upload security reports
