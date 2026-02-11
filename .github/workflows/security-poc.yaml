@@ -84,15 +84,13 @@ jobs:
         docker run --rm \
           --network host \
           -v $GITHUB_WORKSPACE/zap-out:/zap/wrk \
-          -v $GITHUB_WORKSPACE/zap-out:/home/zap \
-          -u $(id -u):$(id -g) \
           ghcr.io/zaproxy/zaproxy:stable \
           zap-baseline.py \
           -t http://localhost:3000 \
-          -r /zap/wrk/zap.html \
-          -x /zap/wrk/zap.xml \
-          -J /zap/wrk/zap.json \
-          --auto
+          -r zap.html \
+          -x zap.xml \
+          -J zap.json
+
 
 
 
