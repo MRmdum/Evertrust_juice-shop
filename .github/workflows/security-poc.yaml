@@ -113,9 +113,11 @@ jobs:
 
     - name: Upload Semgrep to DefectDojo
       run: |
-        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/reimport-scan/" \
+        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
           -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-          -F "product_name='${{ secrets.DEFECTDOJO_PRODUCT_NAME }}'" \
+          -F "auto_create_context=true" \
+          -F "product_name=${{ secrets.DEFECTDOJO_PRODUCT_NAME }}" \
+          -F "engagement_name=${{ secrets.DEFECTDOJO_ENGAGEMENT_NAME }}" \
           -F "engagement=${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}" \
           -F "scan_type=Semgrep JSON Report" \
           -F "file=@semgrep.json" \
@@ -124,9 +126,11 @@ jobs:
 
     - name: Upload Trivy FS to DefectDojo
       run: |
-        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/reimport-scan/" \
+        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
           -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-          -F "product_name='${{ secrets.DEFECTDOJO_PRODUCT_NAME }}'" \
+          -F "auto_create_context=true" \
+          -F "product_name=${{ secrets.DEFECTDOJO_PRODUCT_NAME }}" \
+          -F "engagement_name=${{ secrets.DEFECTDOJO_ENGAGEMENT_NAME }}" \
           -F "engagement=${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}" \
           -F "scan_type=Trivy Scan" \
           -F "file=@trivy-fs.json" \
@@ -135,9 +139,11 @@ jobs:
 
     - name: Upload Trivy Image to DefectDojo
       run: |
-        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/reimport-scan/" \
+        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
           -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-          -F "product_name='${{ secrets.DEFECTDOJO_PRODUCT_NAME }}'" \
+          -F "auto_create_context=true" \
+          -F "product_name=${{ secrets.DEFECTDOJO_PRODUCT_NAME }}" \
+          -F "engagement_name=${{ secrets.DEFECTDOJO_ENGAGEMENT_NAME }}" \
           -F "engagement=${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}" \
           -F "scan_type=Trivy Scan" \
           -F "file=@trivy-image.json" \
@@ -146,9 +152,11 @@ jobs:
 
     - name: Upload ZAP to DefectDojo
       run: |
-        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/reimport-scan/" \
+        curl -X POST "${{ secrets.DEFECTDOJO_URL }}/api/v2/import-scan/" \
           -H "Authorization: Token ${{ secrets.DEFECTDOJO_API_KEY }}" \
-          -F "product_name='${{ secrets.DEFECTDOJO_PRODUCT_NAME }}'" \
+          -F "auto_create_context=true" \
+          -F "product_name=${{ secrets.DEFECTDOJO_PRODUCT_NAME }}" \
+          -F "engagement_name=${{ secrets.DEFECTDOJO_ENGAGEMENT_NAME }}" \
           -F "engagement=${{ secrets.DEFECTDOJO_ENGAGEMENT_ID }}" \
           -F "scan_type=ZAP Scan" \
           -F "file=@zap-out/zap.json" \
