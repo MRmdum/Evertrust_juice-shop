@@ -83,6 +83,7 @@ jobs:
         docker run --rm \
           --network host \
           -v $(pwd):/zap/wrk \
+          -u $(id -u):$(id -g) \
           ghcr.io/zaproxy/zaproxy:stable \
           zap-baseline.py \
           -t http://localhost:3000 \
