@@ -163,28 +163,36 @@ jobs:
     - name: Enrich Trivy FS Report
       run: |
         jq --slurpfile risk risk-db.json '
-          .Results[].Vulnerabilities |=
+          .Results |=
           map(
-            . as $v
-            | ($risk[0][$v.VulnerabilityID] // {epss:0, percentile:0, kev:false}) as $r
-            | .risk_score =
-                (
-                  ((.CVSS.nvd.V3Score // 0) * 0.4)
-                  +
-                  ($r.epss * 10 * 0.3)
-                  +
-                  (if $r.kev then 2 else 0 end)
+            if .Vulnerabilities then
+              .Vulnerabilities |=
+                map(
+                  . as $v
+                  | ($risk[0][$v.VulnerabilityID] // {epss:0, percentile:0, kev:false}) as $r
+                  | .risk_score =
+                      (
+                        ((.CVSS.nvd.V3Score // 0) * 0.4)
+                        +
+                        ($r.epss * 10 * 0.3)
+                        +
+                        (if $r.kev then 2 else 0 end)
+                      )
+                  | .epss = $r.epss
+                  | .epss_percentile = $r.percentile
+                  | .kev = $r.kev
+                  | .Severity =
+                      (if .risk_score >= 7 then "Critical"
+                      elif .risk_score >= 5 then "High"
+                      elif .risk_score >= 3 then "Medium"
+                      else "Low" end)
+                  | .Description =
+                      (.Description // "") +
+                      "\n\n---\nEPSS: \($r.epss)\nPercentile: \($r.percentile)\nKEV: \($r.kev)\nRisk Score: \(.risk_score)"
                 )
-            | .epss = $r.epss
-            | .epss_percentile = $r.percentile
-            | .kev = $r.kev
-            | .Severity =
-                (if .risk_score >= 7 then "Critical"
-                elif .risk_score >= 5 then "High"
-                elif .risk_score >= 3 then "Medium"
-                else "Low" end)
-            | .Description +=
-                "\n\n---\nEPSS: \($r.epss)\nPercentile: \($r.percentile)\nKEV: \($r.kev)\nRisk Score: \(.risk_score)"
+            else
+              .
+            end
           )
         ' trivy-fs.json > trivy-fs-enriched.json
 
