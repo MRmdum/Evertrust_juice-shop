@@ -94,6 +94,100 @@ jobs:
           -J zap.json \
           -I
 
+
+    # --------------------------------------------------
+    # Enrich with EPSS
+    # --------------------------------------------------
+
+    - name: Extract Unique CVEs
+      run: |
+        jq -r '
+          .Results[].Vulnerabilities[]?.VulnerabilityID
+        ' trivy-fs.json trivy-image.json \
+        | grep "^CVE-" \
+        | sort -u > cves.txt
+
+        echo "Total CVEs:"
+        wc -l cves.txt
+
+    - name: Fetch EPSS Bulk Data
+      run: |
+        CVE_LIST=$(paste -sd "," cves.txt)
+
+        curl -s "https://api.first.org/data/v1/epss?cve=$CVE_LIST" \
+          | jq '
+              .data
+              | map({
+                  (.cve): {
+                    epss: (.epss | tonumber),
+                    percentile: (.percentile | tonumber)
+                  }
+                })
+              | add
+            ' > epss.json
+
+        cat epss.json
+
+
+    - name: Fetch KEV Feed
+      run: |
+        curl -s https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json \
+          | jq '
+              .vulnerabilities
+              | map({ (.cveID): true })
+              | add
+            ' > kev.json
+
+        cat kev.json
+
+    - name: Build Risk Intelligence DB
+      run: |
+        jq -s '
+          .[0] as $epss
+          | .[1] as $kev
+          | $epss
+          | to_entries
+          | map({
+              key: .key,
+              value: {
+                epss: .value.epss,
+                percentile: .value.percentile,
+                kev: ($kev[.key] // false)
+              }
+            })
+          | from_entries
+        ' epss.json kev.json > risk-db.json
+
+        cat risk-db.json
+
+    - name: Enrich Trivy FS Report
+      run: |
+        jq --slurpfile risk risk-db.json '
+          .Results[].Vulnerabilities |=
+          map(
+            . as $v
+            | ($risk[0][$v.VulnerabilityID] // {epss:0, percentile:0, kev:false}) as $r
+            | .risk_score =
+                (
+                  ((.CVSS.nvd.V3Score // 0) * 0.4)
+                  +
+                  ($r.epss * 10 * 0.3)
+                  +
+                  (if $r.kev then 2 else 0 end)
+                )
+            | .epss = $r.epss
+            | .epss_percentile = $r.percentile
+            | .kev = $r.kev
+            | .Severity =
+                (if .risk_score >= 7 then "Critical"
+                elif .risk_score >= 5 then "High"
+                elif .risk_score >= 3 then "Medium"
+                else "Low" end)
+            | .Description +=
+                "\n\n---\nEPSS: \($r.epss)\nPercentile: \($r.percentile)\nKEV: \($r.kev)\nRisk Score: \(.risk_score)"
+          )
+        ' trivy-fs.json > trivy-fs-enriched.json
+
     # --------------------------------------------------
     # Upload security reports
     # --------------------------------------------------
@@ -105,7 +199,7 @@ jobs:
         path: |
           semgrep.json
           gitleaks.json
-          trivy-fs.json
+          trivy-fs-enriched.json
           trivy-image.json
           zap-out/zap.json
           zap-out/zap.html
